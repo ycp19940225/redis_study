@@ -3,11 +3,18 @@
 namespace App\Http\Controllers;
 
 use App\Models\Post;
+use App\Repository\PostRepository;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redis;
 
 class PostController extends Controller
 {
+    private $postRepository;
+
+    public function __construct(PostRepository $postRepository)
+    {
+        $this->postRepository = $postRepository;
+    }
     //
     public function show(Post $post)
     {
@@ -21,17 +28,9 @@ class PostController extends Controller
 
     public function popular()
     {
-        $postIds = Redis::zrevrange('popular_posts', 0 , 9);
-        if(!empty($postIds)){
-            $postIdsStr= implode(',', $postIds);
-            $postInfo = Post::whereIn('id', $postIds)
-                ->select(['id', 'title', 'views'])
-                ->orderBYRaw("field(`id`, '".$postIdsStr."')")
-                ->get()->toArray();
-        }else{
-            $postInfo = [];
+        $posts = $this->postRepository->trending(10);
+        if ($posts) {
+            dump($posts->toArray());
         }
-
-        dd($postInfo);
     }
 }
