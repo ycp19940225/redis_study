@@ -1,0 +1,24 @@
+version: '3.4'
+services:
+  swoft:
+    image: webdevops/php-nginx:7.3
+    container_name: pdf
+    environment:
+      - APP_ENV=dev
+      - PHP_DATE_TIMEZONE=Asia/Shanghai
+    restart: always
+    ports:
+      - "8080:80"
+    volumes:
+      - ./:/app/
+      - ./ci-nginx.conf:/opt/docker/etc/nginx/vhost.conf
+#    stdin_open: true
+#    tty: true
+#    command: /bin/bashd
+    networks:
+      - mynet
+networks:
+  mynet:
+    external: true
+
+
