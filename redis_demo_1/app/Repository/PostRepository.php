@@ -2,11 +2,13 @@
 namespace App\Repository;
 
 use App\Models\Post;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Redis;
 
 class PostRepository
 {
     protected $post;
+    private $trendingPostsKey = 'trending_posts_key';
 
     public function __construct(Post $post)
     {
@@ -14,7 +16,10 @@ class PostRepository
     }
     public function getById(int $id, array $columns = ['*'])
     {
-        return $this->post->select($columns)->find($id);
+        $key = 'posts_' . $id;
+        return Cache::remember($key, 1 * 60, function () use ($id, $columns) {
+            return $this->post->select($columns)->find($id);
+        });
     }
 
     public function getByManyId(array $ids, array $columns = ['*'], callable $callback = null)
@@ -39,13 +44,23 @@ class PostRepository
     // 热门文章排行榜
     public function trending($num = 10)
     {
-        $postIds = Redis::zrevrange('popular_posts', 0, $num - 1);
-        if (!$postIds) {
-            return null;
-        }
-        $idsStr = implode(',', $postIds);
-        return $this->getByManyId($postIds, ['*'], function ($query) use ($idsStr) {
-            return $query->orderByRaw('field(`id`, ' . $idsStr . ')');
+        $cacheKey = $this->trendingPostsKey . '_' . $num;
+
+        return Cache::remember($cacheKey, 3, function () use ($num){
+            $postIds = Redis::zrevrange('popular_posts', 0, $num - 1);
+            if (!$postIds) {
+                return [];
+            }
+            $idsStr = implode(',', $postIds);
+            return $this->getByManyId($postIds, ['*'], function ($query) use ($idsStr) {
+                return $query->orderByRaw('field(`id`, ' . $idsStr . ')');
+            });
         });
+    }
+
+    public function addViewsQueue(Post $post)
+    {
+        Redis::rpush('popular_posts_queue', $post->id);
+        return ++$post->views;
     }
 }

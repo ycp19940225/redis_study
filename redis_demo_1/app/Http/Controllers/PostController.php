@@ -16,14 +16,11 @@ class PostController extends Controller
         $this->postRepository = $postRepository;
     }
     //
-    public function show(Post $post)
+    public function show($id)
     {
-        $post->increment('views');
-        if($post->save()){
-            Redis::zincrby('popular_posts', 1, $post->id);
-        }
-
-        return 'show post id :' . $post->id;
+        $post = $this->postRepository->getById($id);
+        $views = $this->postRepository->addViewsQueue($post);
+        return "Show Post #{$post->id}, Views: {$views}";
     }
 
     public function popular()
