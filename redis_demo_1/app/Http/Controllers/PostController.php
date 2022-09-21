@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\Postviewed;
 use App\Models\Post;
 use App\Repository\PostRepository;
 use Illuminate\Http\Request;
@@ -19,8 +20,10 @@ class PostController extends Controller
     public function show($id)
     {
         $post = $this->postRepository->getById($id);
-        $views = $this->postRepository->addViewsQueue($post);
-        return "Show Post #{$post->id}, Views: {$views}";
+//        $views = $this->postRepository->addViewsQueue($post);
+//        $views = $this->postRepository->addViewsQueue($post);
+        event(new Postviewed($post));
+        return "Show Post #{$post->id}, Views: {$post->views}";
     }
 
     public function popular()
