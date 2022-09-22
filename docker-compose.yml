@@ -1,24 +1,37 @@
 version: '3.4'
 services:
-  swoft:
-    image: webdevops/php-nginx:7.3
-    container_name: pdf
+  mysql:
+    image: mysql:5.7
+    container_name: ycp-mysql
     environment:
-      - APP_ENV=dev
-      - PHP_DATE_TIMEZONE=Asia/Shanghai
-    restart: always
+      - MYSQL_ROOT_PASSWORD=root
     ports:
-      - "8080:80"
+      - "3306:3306"
     volumes:
-      - ./:/app/
-      - ./ci-nginx.conf:/opt/docker/etc/nginx/vhost.conf
-#    stdin_open: true
-#    tty: true
-#    command: /bin/bashd
+      - ./data/mysql:/var/lib/mysql
+    restart: always
+    networks:
+      - mynet
+  redis:
+    container_name: ycp-redis
+    image: redis:4-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - './data/redis:/data'
+    sysctls:
+      net.core.somaxconn: 65535
+    restart: always
+    networks:
+      - mynet
+  redis-rebloom:
+    image: 'redislabs/rebloom:latest'
+    ports:
+      - "16379:6379"
+    volumes:
+      - './data/sailredis:/data'
     networks:
       - mynet
 networks:
   mynet:
     external: true
-
-
