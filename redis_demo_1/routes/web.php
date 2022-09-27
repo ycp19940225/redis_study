@@ -18,6 +18,10 @@ use Illuminate\Support\Facades\Route;
 Route::get('/posts/popular', [PostController::class, 'popular']);
 Route::get('/posts/{id}', [PostController::class, 'show'])->where('id', '[0-9]+');
 
+Route::get('/posts/create', [PostController::class, 'create']);
+Route::post('/posts/store', [PostController::class, 'store']);
+
+
 
 Route::get('/connection', function () {
     dd(\Illuminate\Support\Facades\Redis::connection());
